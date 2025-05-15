@@ -28,6 +28,33 @@ step = 1
 
 cap = cv2.VideoCapture(0)
 
+# 设置卷积核大小
+kernel = np.ones((5, 5), np.uint8)
+
+# 红1阈值
+up_red1 = np.array([10, 255, 255], dtype=np.uint8)
+low_red1 = np.array([0, 43, 46], dtype=np.uint8)
+
+# 红2阈值
+up_red2 = np.array([180, 255, 255], dtype=np.uint8)
+low_red2 = np.array([156, 43, 46], dtype=np.uint8)
+
+max_red = 0
+index_red = -1
+
+# 蓝阈值
+up_blue = np.array([124, 255, 255], dtype=np.uint8)
+low_blue = np.array([100, 43, 46], dtype=np.uint8)
+
+max_blue = 0
+index_blue = -1
+
+max_blue_circle = 0
+index_blue_circle = -1
+
+# 创建二维码检测器
+qr_detector = cv2.QRCodeDetector()
+
 while True:
     ret, frame = cap.read()
     image = cv2.flip(frame, 1)
@@ -43,17 +70,7 @@ while True:
     # BGR转HSV
     HSV = cv2.cvtColor(median, cv2.COLOR_BGR2HSV)
 
-    # 设置卷积核大小
-    kernel = np.ones((5, 5), np.uint8)
-
     if step == 1:
-        # 红1阈值
-        up_red1 = np.array([10, 255, 255], dtype=np.uint8)
-        low_red1 = np.array([0, 43, 46], dtype=np.uint8)
-
-        # 红2阈值
-        up_red2 = np.array([180, 255, 255], dtype=np.uint8)
-        low_red2 = np.array([156, 43, 46], dtype=np.uint8)
 
         # 设置掩膜
         mask_red1 = cv2.inRange(HSV, low_red1, up_red1)
@@ -72,9 +89,6 @@ while True:
         if contours_red is not None:
             # 将轮廓保存为数组
             contours_array_red = [cnt_red for cnt_red in contours_red]  # 将轮廓点集存储为一个数组
-            
-            max_red = 0
-            index_red = -1
 
             # 遍历轮廓并计算面积
             for i in range(len(contours_red)):
@@ -94,6 +108,9 @@ while True:
 
                 print("最大红色色块：{}".format(center_red))
                 cv2.circle(output_image, center_red, 3, (0, 255, 0), 5)
+                
+                max_red = 0
+                index_red = -1
                 step = 2
 
             else:
@@ -105,10 +122,6 @@ while True:
 
 
     elif step == 2:
-
-        # 蓝阈值
-        up_blue = np.array([124, 255, 255], dtype=np.uint8)
-        low_blue = np.array([100, 43, 46], dtype=np.uint8)
 
         # 设置掩膜
         mask_blue = cv2.inRange(HSV, low_blue, up_blue)
@@ -123,9 +136,6 @@ while True:
         if contours_blue is not None:
             # 将轮廓保存为数组
             contours_array_blue = [cnt_blue for cnt_blue in contours_blue]  # 将轮廓点集存储为一个数组
-
-            max_blue = 0
-            index_blue = -1
 
             # 遍历轮廓并计算面积
             for j in range(len(contours_blue)):
@@ -145,6 +155,9 @@ while True:
 
                 print("最大蓝色色块：{}".format(center_blue))
                 cv2.circle(output_image, center_blue, 3, (0, 255, 0), 5)
+                
+                max_blue = 0
+                index_blue = -1
                 step = 3
 
             else:
@@ -155,10 +168,6 @@ while True:
 
 
     elif step == 3:
-        
-        # 蓝阈值
-        up_blue = np.array([124, 255, 255], dtype=np.uint8)
-        low_blue = np.array([100, 43, 46], dtype=np.uint8)
 
         # 设置掩膜
         mask_blue = cv2.inRange(HSV, low_blue, up_blue)
@@ -179,9 +188,6 @@ while True:
         
         if len(contours_blue_circle) != 0:
 
-            max_blue_circle = 0
-            index_blue_circle = -1
-
             # 遍历轮廓并计算面积
             for l in range(len(contours_blue_circle)):
                 area_blue_circle = cv2.contourArea(contours_blue_circle[l])
@@ -201,6 +207,8 @@ while True:
                 print("最大蓝色圆圈：{}".format(center_blue_circle))
                 cv2.circle(output_image, center_blue_circle, 3, (0, 255, 0), 5)
 
+                max_blue_circle = 0
+                index_blue_circle = -1
                 step = 4
 
             else:
@@ -211,9 +219,6 @@ while True:
 
 
     elif step == 4:
-
-        # 创建二维码检测器
-        qr_detector = cv2.QRCodeDetector()
 
         # 解码二维码
         data, points, _ = qr_detector.detectAndDecode(image)
